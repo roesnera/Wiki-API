@@ -28,6 +28,8 @@ const articleSchema = new mongoose.Schema({
 });
 
 const Article = mongoose.model("Article", articleSchema);
+
+// Routing for articles path
 app
   .route("/articles")
   .get(function (req, res) {
@@ -40,7 +42,7 @@ app
     });
   })
   .post(function (req, res) {
-    const title = req.body.title;
+    const title = _.lowerCase(req.body.title);
     const content = req.body.content;
 
     const postArt = new Article({
@@ -65,6 +67,64 @@ app
       }
     });
   });
+
+
+app.route('/articles/:articleTitle')
+  .get(function(req, res){
+    const articleTitle = _.lowerCase(req.params.articleTitle);
+
+    Article.findOne({ title: articleTitle }, function(err, found){
+      if(err){
+        res.send(err);
+      } else {
+        res.send(found);
+      }
+    });
+  })
+  .delete(function(req, res){
+    const articleTitle = _.lowerCase(req.params.articleTitle);
+    
+    Article.findOneAndDelete({ title: articleTitle }, function(err, found){
+      if(err){
+        res.send(err);
+      } else {
+        res.send('Successfully deleted entry: '+found);
+      };
+    })
+  })
+  .put(function(req, res){
+    const articleTitle = _.lowerCase(req.params.articleTitle);
+
+    const putArt = {
+      title: _.lowerCase(req.body.title),
+      content: req.body.content
+    }
+
+    Article.updateOne({ title: articleTitle }, putArt, function(err, found){
+      if(err){
+        res.send(err);
+      } else {
+        res.send('Successfully updated entry: '+found);
+      };
+    })
+  })
+  .patch(function(req,res){
+    const articleTitle = _.lowerCase(req.params.articleTitle);
+
+    const patchArt = req.body;
+
+    console.log(patchArt);
+    _.has(req.body, 'title') ? patchArt.title = _.lowerCase(req.body.title) : console.log('Does not have title');
+
+    Article.updateOne({ title: articleTitle }, {$set: patchArt}, function(err, found){
+      if(err){
+        res.send(err);
+      } else {
+        res.send('Successfully patched entry: '+found);
+      };
+    })
+  });
+  
 
 app.listen(3000, function () {
   console.log("Server lsitening on port 3000");
